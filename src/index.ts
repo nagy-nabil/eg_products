@@ -1,7 +1,9 @@
 import puppeteer from "puppeteer-core";
 import fs from "fs/promises";
 
-async function scrap() {
+type ContentFn = (page: puppeteer.Page) => Promise<void>;
+
+async function scrap(contentFn: ContentFn) {
     let browser;
     try {
         //  launch/connect a browser, create some pages, and then manipulate them with Puppeteer's API.
@@ -12,28 +14,7 @@ async function scrap() {
         });
         // open new page, then goto into this page(think of it as opning new tab)
         const page = await browser.newPage();
-        await page.goto("https://traversymedia.com");
-
-        // * to target specific content start by getting all the html for the page
-        // const content = await page.content();
-        // await fs.writeFile("content/traversymedia.html", content);
-
-        // if you want to target specific tag like h3 or whatever you can use page.evaluate()
-        // note this function will run in the page context so you can access things like document and so on
-        const title = await page.evaluate(() => {
-            return document.title;
-        });
-        console.log(
-            "🪵 [index.js:23] ~ token ~ \x1b[0;32mtitle\x1b[0m = ",
-            title
-        );
-        const links = await page.evaluate(() =>
-            Array.from(document.querySelectorAll("a"), (e) => e.href)
-        );
-        console.log(
-            "🪵 [index.js:30] ~ token ~ \x1b[0;32mlinks\x1b[0m = ",
-            links
-        );
+        contentFn(page);
     } catch (err) {
         console.log(err);
     } finally {
@@ -41,4 +22,47 @@ async function scrap() {
     }
 }
 
-scrap().catch((err) => console.log(err));
+const elb2alScrap: ContentFn = async (page) => {
+    // Enable request interception
+    await page.setRequestInterception(true);
+
+    // Filter out CSS requests
+    page.on("request", (request) => {
+        if (request.resourceType() === "stylesheet") {
+            request.abort();
+        } else {
+            request.continue();
+        }
+    });
+
+    console.log("before goto");
+    await page.goto("https://alb2al.com/product-category", {
+        timeout: 0,
+    });
+    console.log("after goto");
+    // if you want to target specific tag like h3 or whatever you can use page.evaluate()
+    // note this function will run in the page context so you can access things like document and so on
+    const pageTitle = await page.evaluate(() => {
+        return document.title;
+    });
+
+    const productsContent = await page.evaluate(() =>
+        Array.from(document.querySelectorAll("div .product-content"), (e) => ({
+            id: e
+                .querySelector("a.add_to_cart_button")
+                .getAttribute("data-product_sku"),
+            title: e.querySelector(".block-inner h3.name a").textContent.trim(),
+            price: e.querySelector(".caption .price bdi").textContent.trim(),
+            imageUrl: e.querySelector("figure.image img").getAttribute("src"),
+        }))
+    );
+    await fs.writeFile(
+        "content/elb2al.json",
+        JSON.stringify({
+            title: pageTitle,
+            products: productsContent,
+        })
+    );
+};
+
+scrap(elb2alScrap).catch((err) => console.log(err));
