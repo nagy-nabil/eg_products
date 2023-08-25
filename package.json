@@ -1,18 +1,19 @@
 {
-    "name": "scraping",
+    "name": "eg_products",
     "version": "1.0.0",
-    "description": "",
+    "description": "scrap the net for eg local products information",
     "type": "module",
     "main": "src/index.ts",
     "scripts": {
-        "start": "ts-node src/index.ts",
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "start": "ts-node src/index.ts"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "puppeteer-core": "^20.7.3"
+        "dotenv": "^16.3.1",
+        "puppeteer-core": "^20.7.3",
+        "zod": "^3.22.2"
     },
     "devDependencies": {
         "@swc/core": "^1.3.67",

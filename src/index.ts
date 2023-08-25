@@ -1,5 +1,6 @@
 import puppeteer from "puppeteer-core";
 import fs from "fs/promises";
+import { env } from "./config.js";
 
 async function wait(ms: number) {
     await new Promise((resolve) => {
@@ -12,10 +13,8 @@ async function scrap(contentFn: ContentFn) {
     let browser;
     try {
         //  launch/connect a browser, create some pages, and then manipulate them with Puppeteer's API.
-        const auth =
-            "brd-customer-hl_c016ff82-zone-scraping_browser:3eo5c1g07tpj";
         browser = await puppeteer.connect({
-            browserWSEndpoint: `wss://${auth}@brd.superproxy.io:9222`,
+            browserWSEndpoint: env.WSENDPOINT,
         });
         // open new page, then goto into this page(think of it as opning new tab)
         const page = await browser.newPage();
@@ -103,7 +102,7 @@ const elb2alScrap: ContentFn = async (page) => {
         }))
     );
     await fs.writeFile(
-        "content/elb2al5.json",
+        "content2/elb2al5.json",
         JSON.stringify({
             title: pageTitle,
             products: productsContent,
