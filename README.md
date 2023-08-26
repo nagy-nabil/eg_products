@@ -10,7 +10,7 @@ website
 ![website](/public/alb2lWbsite.png)
 
 CLI
-![cli]('/public/cli.png)
+![cli](/public/cli.png)
 
 OUTPUT
 ![output](/public/output.png)
