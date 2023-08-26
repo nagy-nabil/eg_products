@@ -147,6 +147,8 @@ async function main() {
             await downloadImages();
         }
     }
+
+    console.log("THANK YOU");
 }
 
 await main();

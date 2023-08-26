@@ -6,6 +6,15 @@ what use cases could benfit from this? for me was a point of sale application, w
 
  > NOTE: the script depend on connecting to remote browser using ws
 
+website
+![website](/public/alb2lWbsite.png)
+
+CLI
+![cli]('/public/cli.png)
+
+OUTPUT
+![output](/public/output.png)
+
 ## GETTING STARTED
 
 - make sure you have [node.js](https://nodejs.org/en) installed
