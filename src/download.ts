@@ -1,35 +1,63 @@
 import fs from "fs/promises";
 import path from "path";
-import products1 from "../content/elb2al1.json" assert { type: "json" };
-import products2 from "../content/elb2al2.json" assert { type: "json" };
-import products3 from "../content/elb2al3.json" assert { type: "json" };
-import products4 from "../content/elb2al4.json" assert { type: "json" };
-import products5 from "../content/elb2al5.json" assert { type: "json" };
+import { FileSchameT, ItemT } from "./types.js";
 
-function extractExt(str: string): string {
+function extractExtFromMimetype(str: string): string {
     const slashIndex = str.lastIndexOf("/");
     return str.substring(slashIndex + 1);
 }
-async function download() {
-    products4.products.forEach(async (product) => {
-        const res = await fetch(product.imageUrl);
-        // const file = fs.createWriteStream(`contents/images/${product.id}`);
-        if (res.ok) {
-            const blob = await res.blob();
+/**
+ * download and store image in the fs
+ * @param link link to download
+ * @param imagesFolder path to store in
+ */
+async function storeImage(link: string, imagesFolder: string, name: string) {
+    console.log("gonna download image: ", name);
+    const res = await fetch(link);
+    // const file = fs.createWriteStream(`contents/images/${product.id}`);
+    if (res.ok) {
+        const blob = await res.blob();
 
-            const arrayBuffer = await blob.arrayBuffer();
-            const buffer = Buffer.from(arrayBuffer);
-            const f = path.resolve(
-                "./content/images44",
-                `${product.id}.${extractExt(
+        const arrayBuffer = await blob.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        await fs.writeFile(
+            path.join(
+                imagesFolder,
+                `${name}.${extractExtFromMimetype(
                     res.headers.get("Content-Type") as string
                 )}`
-            );
-            await fs.writeFile(f, buffer);
-        }
-    });
+            ),
+            buffer
+        );
+    }
 }
 
-download().catch((err) => {
-    console.log("🪵 [download.ts:5] ~ token ~ \x1b[0;32merr\x1b[0m = ", err);
-});
+export async function downloadImages() {
+    const contentFolder = path.resolve("content");
+    const imagesFolder = path.resolve("images");
+    await fs.mkdir(imagesFolder);
+    // crawl every json file and download imageUrl
+    const files = await fs.readdir(contentFolder, {
+        encoding: "utf-8",
+        withFileTypes: true,
+    });
+
+    await Promise.all(
+        files.map(async (file) => {
+            if (file.isDirectory()) return;
+            const localFolderPath = path.join(
+                imagesFolder,
+                file.name.split(".")[0]
+            );
+            await fs.mkdir(localFolderPath);
+            const fileData = JSON.parse(
+                await fs.readFile(path.join(contentFolder, file.name), {
+                    encoding: "utf-8",
+                })
+            ) as FileSchameT;
+            for (const product of fileData.products) {
+                await storeImage(product.imageUrl, localFolderPath, product.id);
+            }
+        })
+    );
+}
